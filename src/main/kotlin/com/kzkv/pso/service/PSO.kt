@@ -44,8 +44,12 @@ class ParticleSwarmPathPlanner(
             }
             w *= ALPHA
         }
-        bestGlobalPath.add(goal)
-        return bestGlobalPath
+        if (isNotLineIntersectsObstacle(bestGlobalPath.last(), goal)) {
+            bestGlobalPath.add(goal)
+            return bestGlobalPath
+        } else {
+            return emptyList()
+        }
     }
 
     private fun isNotPointIntersectsObstacle(point: Vector): Boolean {

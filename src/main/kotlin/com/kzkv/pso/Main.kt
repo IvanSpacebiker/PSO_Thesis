@@ -19,22 +19,31 @@ fun main() {
 
 	val endpoints : List<Vector> = mapper.readValue(endpointsJson)
 
-	val obstacles : List<Obstacle> = List(500) {
-		Obstacle(Vector(1.0, 1.0, 1.0), Vector(9.0, 9.0, 9.0), endpoints)
+	var obstacles : List<Obstacle> = mapper.readValue(obstaclesJson)
+	if (obstacles.isEmpty()) {
+		obstacles = Obstacle.createLocation(1000, endpoints)
+		mapper.writerWithDefaultPrettyPrinter().writeValue(obstaclesJson, obstacles)
 	}
-	mapper.writerWithDefaultPrettyPrinter().writeValue(obstaclesJson, obstacles)
 
+	var path = emptyList<Vector>()
+	var restartCounter = 0
 	val startTime = System.currentTimeMillis()
-	val path = ParticleSwarmPathPlanner(endpoints.first(), endpoints.last(), obstacles).findOptimalPath()
-	val endTime = System.currentTimeMillis()
-
-	if (path.isEmpty()) {
-		println("No path found")
-	} else {
-		mapper.writerWithDefaultPrettyPrinter().writeValue(pathJson, path)
-		println("Optimized Path:")
-		path.forEach { println(it) }
-		println("\nTotal Time: ${endTime - startTime}ms")
+	while (path.isEmpty()) {
+		path = ParticleSwarmPathPlanner(endpoints.first(), endpoints.last(), obstacles).findOptimalPath()
+		if (path.isEmpty()) {
+			restartCounter++
+			println("No path found")
+		}
+		if (restartCounter >= 100) {
+			println("Bad parameters")
+			break
+		}
 	}
+	val endTime = System.currentTimeMillis()
+	mapper.writerWithDefaultPrettyPrinter().writeValue(pathJson, path)
+	println("Optimized Path:")
+	path.forEach { println(it) }
+	println("\nTotal Time: ${endTime - startTime}ms")
+	println("\nNumber of restarts: $restartCounter")
 }
 

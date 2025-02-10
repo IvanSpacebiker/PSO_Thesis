@@ -14,4 +14,12 @@ data class Obstacle(val center: Vector, val radius: Double) {
 			min(Vector.getDistance(endpoints.first(), from), Vector.getDistance(endpoints.last(), until)) / 2.0
 		)
 	)
+	companion object {
+		fun createLocation(n: Int, endpoints: List<Vector>): List<Obstacle> {
+			val gap = Vector(1.0, 1.0, 1.0)
+			return List(n) {
+				Obstacle(endpoints.first() + gap, endpoints.last() - gap, endpoints)
+			}
+		}
+	}
 }
