@@ -11,7 +11,7 @@ data class Obstacle(val center: Vector, val radius: Double) {
 		Random.nextDouble(from.y, until.y),
 		Random.nextDouble(from.z, until.z),
 		Random.nextDouble(
-			min(Vector.getDistance(endpoints.first(), from), Vector.getDistance(endpoints.last(), until))
+			min(Vector.getDistance(endpoints.first(), from), Vector.getDistance(endpoints.last(), until)) / 2.0
 		)
 	)
 }

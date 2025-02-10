@@ -26,7 +26,7 @@ class ParticleSwarmPathPlanner(
         var w = W
         repeat(ITERATIONS_N) {
             particles.forEachIndexed { i, particle ->
-                particle.move(bestGlobalPosition)
+                particle.move(bestGlobalPosition, w)
 
                 if (Vector.getDistance(particle.position, goal) < Vector.getDistance(particle.bestPosition, goal)
                     && isNotPointIntersectsObstacle(particle.position)) {
