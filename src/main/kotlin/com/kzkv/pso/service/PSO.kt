@@ -5,28 +5,42 @@ import com.kzkv.pso.config.PsoParams.ITERATIONS_N
 import com.kzkv.pso.config.PsoParams.PARTICLES_N
 import com.kzkv.pso.config.PsoParams.W
 import com.kzkv.pso.data.Obstacle
+import com.kzkv.pso.data.PSOData
 import com.kzkv.pso.data.Particle
 import com.kzkv.pso.data.Vector
 import kotlin.math.pow
 
-class ParticleSwarmPathPlanner(
-    private val start: Vector,
-    private val goal: Vector,
-    private val obstacles: List<Obstacle>,
-) {
-    private val particles = List(PARTICLES_N) {
-        Particle(start, Vector(-1.0, 1.0), start)
-    }.toMutableList()
+class PSO(private val start: Vector, private val goal: Vector, private val obstacles: List<Obstacle>) {
+    private var route : List<Vector> = emptyList()
+    private var restartCounter = 0
+    private var time = 0L
 
-    private var bestGlobalPosition = start.copy()
-    private var bestGlobalPath = ArrayList<Vector>()
+    fun findRouteWithMetrics() : List<Vector> {
+        val startTime = System.currentTimeMillis()
+        while (true) {
+            route = findOptimalRoute()
+            if (route.isNotEmpty()) {
+                break
+            }
+            restartCounter++
+            if (restartCounter >= 100) {
+                println("Bad parameters")
+                return emptyList()
+            }
+        }
+        time = System.currentTimeMillis() - startTime
+        return route
+    }
 
-    fun findOptimalPath(): List<Vector> {
-        bestGlobalPath.add(start)
-        var w = W
+    private fun findOptimalRoute(): List<Vector> {
+        val particles = List(PARTICLES_N) { Particle(start, Vector(-1.0, 1.0), start) }
+        var bestGlobalPosition = start.copy()
+        val bestGlobalRoute = arrayListOf(start)
+        var inertia = W
+
         repeat(ITERATIONS_N) {
             particles.forEachIndexed { i, particle ->
-                particle.move(bestGlobalPosition, w)
+                particle.move(bestGlobalPosition, inertia)
 
                 if (Vector.getDistance(particle.position, goal) < Vector.getDistance(particle.bestPosition, goal)
                     && isNotPointIntersectsObstacle(particle.position)) {
@@ -34,19 +48,19 @@ class ParticleSwarmPathPlanner(
                 }
 
                 if (Vector.getDistance(particle.bestPosition, goal) < Vector.getDistance(bestGlobalPosition, goal)
-                    && isNotLineIntersectsObstacle(bestGlobalPath.last(), particle.bestPosition)) {
+                    && isNotLineIntersectsObstacle(bestGlobalRoute.last(), particle.bestPosition)) {
                     bestGlobalPosition = particle.bestPosition.copy()
-                    if (bestGlobalPath.lastIndex > 0 && isNotLineIntersectsObstacle(bestGlobalPath[bestGlobalPath.lastIndex - 1], particle.bestPosition)) {
-                        bestGlobalPath.removeLast()
+                    if (bestGlobalRoute.lastIndex > 0 && isNotLineIntersectsObstacle(bestGlobalRoute[bestGlobalRoute.lastIndex - 1], particle.bestPosition)) {
+                        bestGlobalRoute.removeLast()
                     }
-                    bestGlobalPath.add(bestGlobalPosition)
+                    bestGlobalRoute.add(bestGlobalPosition)
                 }
             }
-            w *= ALPHA
+            inertia *= ALPHA
         }
-        if (isNotLineIntersectsObstacle(bestGlobalPath.last(), goal)) {
-            bestGlobalPath.add(goal)
-            return bestGlobalPath
+        if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
+            bestGlobalRoute.add(goal)
+            return bestGlobalRoute
         } else {
             return emptyList()
         }
@@ -67,6 +81,19 @@ class ParticleSwarmPathPlanner(
             val distance = abxap.length() / ab.length()
             isProject && distance < obstacle.radius
         }
+    }
+
+    override fun toString(): String {
+        val string = StringBuilder()
+        string.append("Route:\n")
+        route.forEach { string.append(it.toString()).append("\n") }
+        string.append("\nTotal time: ${time}ms\n")
+        string.append("Number of restarts: $restartCounter")
+        return string.toString()
+    }
+
+    fun createPSOData(): PSOData {
+        return PSOData(obstacles, route, start, goal, restartCounter, time)
     }
 
 }

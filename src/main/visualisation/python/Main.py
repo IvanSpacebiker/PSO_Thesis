@@ -77,7 +77,7 @@ def obstacles_to_np_array(data):
 
 if __name__ == "__main__":
     resources_path = Path.cwd().parent.parent.joinpath("resources")
-    path = json.load(open(resources_path.joinpath("path.json"), "r"))
+    path = json.load(open(resources_path.joinpath("route.json"), "r"))
     endpoints = json.load(open(resources_path.joinpath("endpoints.json"), "r"))
     obstacles = json.load(open(resources_path.joinpath("obstacles.json"), "r"))
 

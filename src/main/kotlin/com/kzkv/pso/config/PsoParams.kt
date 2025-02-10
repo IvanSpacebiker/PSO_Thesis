@@ -7,4 +7,5 @@ data object PsoParams {
 	const val C2 = 0.5
 	const val PARTICLES_N = 200
 	const val ITERATIONS_N = 25
+	const val IS_READ = false
 }
