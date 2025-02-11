@@ -4,13 +4,15 @@ import com.kzkv.pso.config.PsoParams.ALPHA
 import com.kzkv.pso.config.PsoParams.ITERATIONS_N
 import com.kzkv.pso.config.PsoParams.PARTICLES_N
 import com.kzkv.pso.config.PsoParams.W
-import com.kzkv.pso.data.Obstacle
+import com.kzkv.pso.entity.Obstacle
 import com.kzkv.pso.data.PSOData
-import com.kzkv.pso.data.Particle
+import com.kzkv.pso.entity.Particle
 import com.kzkv.pso.data.Vector
+import org.springframework.stereotype.Service
 import kotlin.math.pow
 
-class PSO(private val start: Vector, private val goal: Vector, private val obstacles: List<Obstacle>) {
+@Service
+class PsoService(private val start: Vector, private val goal: Vector, private val obstacles: List<Obstacle>) {
     private var route : List<Vector> = emptyList()
     private var restartCounter = 0
     private var time = 0L

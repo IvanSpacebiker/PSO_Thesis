@@ -2,14 +2,16 @@ package com.kzkv.pso.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.kzkv.pso.data.Obstacle
+import com.kzkv.pso.entity.Obstacle
 import com.kzkv.pso.data.PSOData
 import com.kzkv.pso.data.Vector
+import org.springframework.stereotype.Service
 import java.io.File
 import java.nio.file.Paths
 
+@Service
 class JsonService {
-	val mapper = jacksonObjectMapper()
+	private val mapper = jacksonObjectMapper()
 	private val resourcesPath = Paths.get("src/main/resources").toString()
 	private val routeJson = File("$resourcesPath/route.json")
 	private val endpointsJson = File("$resourcesPath/endpoints.json")
@@ -33,7 +35,7 @@ class JsonService {
 		mapper.writerWithDefaultPrettyPrinter().writeValue(routeJson.bufferedWriter(), route)
 	}
 
-	fun writeStatistics(pso: PSO, n: Int) {
+	fun writeStatistics(pso: PsoService, n: Int) {
 		val psoList = arrayListOf<PSOData>()
 		for (i in 0..< n) {
 			pso.findRouteWithMetrics()
