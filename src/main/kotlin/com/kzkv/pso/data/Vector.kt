@@ -5,6 +5,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 data class Vector(val x: Double, val y: Double, val z: Double) {
+	constructor() : this(0.0, 0.0, 0.0)
 	constructor(from: Double, until: Double) : this(
 		Random.nextDouble(from, until),
 		Random.nextDouble(from, until),

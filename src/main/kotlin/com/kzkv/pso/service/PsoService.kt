@@ -1,71 +1,66 @@
 package com.kzkv.pso.service
 
-import com.kzkv.pso.config.PsoParams.ALPHA
-import com.kzkv.pso.config.PsoParams.ITERATIONS_N
-import com.kzkv.pso.config.PsoParams.PARTICLES_N
-import com.kzkv.pso.config.PsoParams.W
-import com.kzkv.pso.entity.Obstacle
-import com.kzkv.pso.data.PSOData
-import com.kzkv.pso.entity.Particle
+import com.kzkv.pso.data.ParticleParams
 import com.kzkv.pso.data.Vector
+import com.kzkv.pso.entity.Obstacle
+import com.kzkv.pso.entity.Particle
 import org.springframework.stereotype.Service
 import kotlin.math.pow
 
 @Service
-class PsoService(private val start: Vector, private val goal: Vector, private val obstacles: List<Obstacle>) {
+class PsoService(
+    private val jsonService: JsonService,
+    private val obstacleService: ObstacleService
+) {
     private var route : List<Vector> = emptyList()
-    private var restartCounter = 0
-    private var time = 0L
+    private var obstacles : List<Obstacle> = emptyList()
 
-    fun findRouteWithMetrics() : List<Vector> {
-        val startTime = System.currentTimeMillis()
-        while (true) {
-            route = findOptimalRoute()
-            if (route.isNotEmpty()) {
-                break
-            }
-            restartCounter++
-            if (restartCounter >= 100) {
-                println("Bad parameters")
-                return emptyList()
-            }
-        }
-        time = System.currentTimeMillis() - startTime
-        return route
-    }
+    fun findRoute(params: ParticleParams): List<Vector> {
+        var restarts = 0
+        obstacles = obstacleService.readObstacles()
+        while (restarts < 100) {
+            val start = params.endpoints.first()
+            val goal = params.endpoints.last()
+            val particles = List(params.numberOfParticles) { Particle(start, Vector(-1.0, 1.0), start) }
+            var bestGlobalPosition = start.copy()
+            val bestGlobalRoute = arrayListOf(start)
+            var inertia = params.w
 
-    private fun findOptimalRoute(): List<Vector> {
-        val particles = List(PARTICLES_N) { Particle(start, Vector(-1.0, 1.0), start) }
-        var bestGlobalPosition = start.copy()
-        val bestGlobalRoute = arrayListOf(start)
-        var inertia = W
+            repeat(params.numberOfIterations) {
+                particles.forEachIndexed { i, particle ->
+                    particle.move(bestGlobalPosition, inertia, params)
 
-        repeat(ITERATIONS_N) {
-            particles.forEachIndexed { i, particle ->
-                particle.move(bestGlobalPosition, inertia)
-
-                if (Vector.getDistance(particle.position, goal) < Vector.getDistance(particle.bestPosition, goal)
-                    && isNotPointIntersectsObstacle(particle.position)) {
-                    particle.bestPosition = particle.position.copy()
-                }
-
-                if (Vector.getDistance(particle.bestPosition, goal) < Vector.getDistance(bestGlobalPosition, goal)
-                    && isNotLineIntersectsObstacle(bestGlobalRoute.last(), particle.bestPosition)) {
-                    bestGlobalPosition = particle.bestPosition.copy()
-                    if (bestGlobalRoute.lastIndex > 0 && isNotLineIntersectsObstacle(bestGlobalRoute[bestGlobalRoute.lastIndex - 1], particle.bestPosition)) {
-                        bestGlobalRoute.removeLast()
+                    if (Vector.getDistance(particle.position, goal) < Vector.getDistance(particle.bestPosition, goal)
+                        && isNotPointIntersectsObstacle(particle.position)
+                    ) {
+                        particle.bestPosition = particle.position.copy()
                     }
-                    bestGlobalRoute.add(bestGlobalPosition)
+
+                    if (Vector.getDistance(particle.bestPosition, goal) < Vector.getDistance(bestGlobalPosition, goal)
+                        && isNotLineIntersectsObstacle(bestGlobalRoute.last(), particle.bestPosition)
+                    ) {
+                        bestGlobalPosition = particle.bestPosition.copy()
+                        if (bestGlobalRoute.lastIndex > 0 && isNotLineIntersectsObstacle(
+                                bestGlobalRoute[bestGlobalRoute.lastIndex - 1],
+                                particle.bestPosition
+                            )
+                        ) {
+                            bestGlobalRoute.removeLast()
+                        }
+                        bestGlobalRoute.add(bestGlobalPosition)
+                    }
                 }
+                inertia *= params.alpha
             }
-            inertia *= ALPHA
+            if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
+                bestGlobalRoute.add(goal)
+                route = bestGlobalRoute
+                jsonService.writeRoute(route)
+                return route
+            }
+            restarts++
         }
-        if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
-            bestGlobalRoute.add(goal)
-            return bestGlobalRoute
-        } else {
-            return emptyList()
-        }
+        return route
     }
 
     private fun isNotPointIntersectsObstacle(point: Vector): Boolean {
@@ -83,19 +78,6 @@ class PsoService(private val start: Vector, private val goal: Vector, private va
             val distance = abxap.length() / ab.length()
             isProject && distance < obstacle.radius
         }
-    }
-
-    override fun toString(): String {
-        val string = StringBuilder()
-        string.append("Route:\n")
-        route.forEach { string.append(it.toString()).append("\n") }
-        string.append("\nTotal time: ${time}ms\n")
-        string.append("Number of restarts: $restartCounter")
-        return string.toString()
-    }
-
-    fun createPSOData(): PSOData {
-        return PSOData(obstacles, route, start, goal, restartCounter, time)
     }
 
 }
