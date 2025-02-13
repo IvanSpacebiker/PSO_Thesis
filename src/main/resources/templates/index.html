@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D PSO Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shadcn/ui@latest/dist/shadcn-ui.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            overflow: hidden
+        }
+
+        #controls {
+            padding: 1%;
+            background: #f8f8f8;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        canvas {
+            flex: 1;
+            display: block;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .btn {
+            background: #3f51b5;
+            color: white;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #303f9f;
+        }
+    </style>
+</head>
+<body>
+<div id="controls">
+    <h3>Препятствия</h3>
+    <div class="form-group">
+        <label>Кол-во препятствий</label>
+        <input id="numObstacles" type="number" value="10" class="input">
+    </div>
+    <div class="form-group">
+        <label>Координаты 1</label>
+        <input id="x1" type="number" value="1" class="input" placeholder="X1">
+        <input id="y1" type="number" value="1" class="input" placeholder="Y1">
+        <input id="z1" type="number" value="1" class="input" placeholder="Z1">
+    </div>
+    <div class="form-group">
+        <label>Координаты 2</label>
+        <input id="x2" type="number" value="9" class="input" placeholder="X2">
+        <input id="y2" type="number" value="9" class="input" placeholder="Y2">
+        <input id="z2" type="number" value="9" class="input" placeholder="Z2">
+    </div>
+    <label>
+        <input id="moving" type="checkbox"> Движущиеся
+    </label>
+    <button class="btn" onclick="createObstacles()">Создать</button>
+
+    <h3>Частицы</h3>
+    <div class="form-group">
+        <label>W</label>
+        <input id="w" type="number" step="0.01" value="0.9" class="input">
+    </div>
+    <div class="form-group">
+        <label>Alpha</label>
+        <input id="alpha" type="number" step="0.01" value="0.98" class="input">
+    </div>
+    <div class="form-group">
+        <label>C1</label>
+        <input id="c1" type="number" step="0.01" value="0.5" class="input">
+    </div>
+    <div class="form-group">
+        <label>C2</label>
+        <input id="c2" type="number" step="0.01" value="0.5" class="input">
+    </div>
+    <div class="form-group">
+        <label>Частиц</label>
+        <input id="numParticles" type="number" value="100" class="input">
+    </div>
+    <div class="form-group">
+        <label>Итераций</label>
+        <input id="numIterations" type="number" value="25" class="input">
+    </div>
+    <button class="btn" onclick="findRoute()">Найти маршрут</button>
+</div>
+
+<script>
+    let scene, camera, renderer, controls, trajectoryLine;
+    let obstacles = [];
+
+    let socket = new WebSocket("ws://localhost:8080/ws/obstacles");
+
+    socket.onmessage = function (event) {
+        let aggregateResult = JSON.parse(event.data);
+        let obstacles = aggregateResult.obstacles;
+        let route = aggregateResult.route;
+        obstacles.forEach(updateObstacle);
+        drawRoute(route)
+    };
+
+    function updateObstacle(obstacle) {
+        let mesh = scene.getObjectByName(obstacle.id);
+        if (mesh) {
+            mesh.position.set(obstacle.center.x, obstacle.center.y, obstacle.center.z);
+        }
+    }
+
+    function init() {
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(5, 10, 20);
+
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.1;
+        controls.screenSpacePanning = false;
+        controls.maxDistance = 50;
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.0);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1, 50);
+        pointLight.position.set(2, 5, 2);
+        scene.add(pointLight);
+
+        window.addEventListener("resize", onWindowResize);
+        loadObstacles();
+        animate();
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function loadObstacles() {
+        fetch("/obstacle")
+            .then(res => res.json())
+            .then(data => {
+                clearObstacles();
+                data.forEach(obstacle => addObstacle(obstacle));
+            });
+    }
+
+    function createObstacles() {
+        const params = {
+            obstacleParams: {
+                numberOfObstacles: parseInt(document.getElementById("numObstacles").value),
+                endpoints: [
+                    {
+                        x: parseFloat(document.getElementById("x1").value),
+                        y: parseFloat(document.getElementById("y1").value),
+                        z: parseFloat(document.getElementById("z1").value)
+                    },
+                    {
+                        x: parseFloat(document.getElementById("x2").value),
+                        y: parseFloat(document.getElementById("y2").value),
+                        z: parseFloat(document.getElementById("z2").value)
+                    }
+                ],
+                isMoving: document.getElementById("moving").checked
+            },
+            particleParams: {
+                w: parseFloat(document.getElementById("w").value),
+                alpha: parseFloat(document.getElementById("alpha").value),
+                c1: parseFloat(document.getElementById("c1").value),
+                c2: parseFloat(document.getElementById("c2").value),
+                numberOfParticles: parseInt(document.getElementById("numParticles").value),
+                numberOfIterations: parseInt(document.getElementById("numIterations").value),
+                endpoints: [
+                    {x: 0, y: 0, z: 0},
+                    {x: 10, y: 10, z: 10}
+                ]
+            }
+        };
+        fetch("/obstacle", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(params)
+        })
+            .then(res => res.json())
+            .then(data => {
+                clearObstacles();
+                data.forEach(obstacle => addObstacle(obstacle));
+            });
+    }
+
+    function addObstacle(obstacle) {
+        const geometry = new THREE.SphereGeometry(obstacle.radius, 32, 32);
+        const material = new THREE.MeshStandardMaterial({color: "red", roughness: 0.9, metalness: 0.1});
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(obstacle.center.x, obstacle.center.y, obstacle.center.z);
+        mesh.castShadow = true;
+        mesh.name = obstacle.id;
+        scene.add(mesh);
+        obstacles.push(mesh);
+    }
+
+    function clearObstacles() {
+        obstacles.forEach(obj => scene.remove(obj));
+        obstacles = [];
+    }
+
+    function findRoute() {
+        const params = {
+            w: parseFloat(document.getElementById("w").value),
+            alpha: parseFloat(document.getElementById("alpha").value),
+            c1: parseFloat(document.getElementById("c1").value),
+            c2: parseFloat(document.getElementById("c2").value),
+            numberOfParticles: parseInt(document.getElementById("numParticles").value),
+            numberOfIterations: parseInt(document.getElementById("numIterations").value),
+            endpoints: [
+                {x: 0, y: 0, z: 0},
+                {x: 10, y: 10, z: 10}
+            ]
+        };
+        fetch("/pso", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(params)
+        })
+            .then(res => res.json())
+            .then(data => drawRoute(data));
+    }
+
+    function drawRoute(points) {
+        if (trajectoryLine) scene.remove(trajectoryLine);
+
+        const path = points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+        const geometry = new THREE.BufferGeometry().setFromPoints(path);
+        const material = new THREE.LineBasicMaterial({color: "lime", linewidth: 2});
+
+        trajectoryLine = new THREE.Line(geometry, material);
+        scene.add(trajectoryLine);
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    init();
+</script>
+</body>
+</html>

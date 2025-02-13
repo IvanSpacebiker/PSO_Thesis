@@ -11,7 +11,11 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
 		Random.nextDouble(from, until),
 		Random.nextDouble(from, until),
 	)
-	constructor(v1: Vector, v2: Vector) : this(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z,)
+	constructor(v1: Vector, v2: Vector) : this(
+		Random.nextDouble(v1.x, v2.x),
+		Random.nextDouble(v1.y, v2.y),
+		Random.nextDouble(v1.z, v2.z),
+	)
 
 	companion object {
 		fun getDistance(o1: Vector, o2: Vector) : Double {
@@ -26,6 +30,9 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
 				o1.z * o2.x - o1.x * o2.z,
 				o1.x * o2.y - o1.y * o2.x
 			)
+		}
+		fun random() : Vector {
+			return Vector(-1.0, 1.0)
 		}
 	}
 

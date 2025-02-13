@@ -1,29 +1,32 @@
 package com.kzkv.pso.entity
 
+import com.kzkv.pso.data.ObstacleParams
 import com.kzkv.pso.data.Vector
+import java.util.UUID
 import kotlin.random.Random
 
 
 data class Obstacle(
+	val id : String,
 	var center: Vector,
 	var radius: Double,
-	val startPoint: Vector,
-	val endPoint: Vector,
-	val speed: Double
+	var startPoint: Vector,
+	var endPoint: Vector,
+	var speed: Double
 ) {
-	constructor() : this(Vector(), 0.0, Vector(), Vector(), 0.0)
-	constructor(x: Double, y: Double, z: Double, radius: Double, startPoint: Vector, endPoint: Vector, speed: Double) :
-			this(Vector(x, y, z), radius, startPoint, endPoint, speed)
-
-	constructor(x: Double, y: Double, z: Double, radius: Double) :
-			this(Vector(x, y, z), radius, Vector(x, y, z), Vector(x, y, z), 0.0)
-
-	constructor(endpoints: List<Vector>) : this(
-		Random.nextDouble(endpoints.first().x, endpoints.last().x),
-		Random.nextDouble(endpoints.first().y, endpoints.last().y),
-		Random.nextDouble(endpoints.first().z, endpoints.last().z),
-		Random.nextDouble(Vector(1.0, 1.0, 1.0).length() / 2.0)
-	)
+	constructor() : this(UUID.randomUUID().toString(), Vector(), 0.0, Vector(), Vector(), 0.0)
+	constructor(params: ObstacleParams) : this() {
+		val vector = Vector(params.endpoints.first(), params.endpoints.last())
+		this.center = vector
+		this.radius = Random.nextDouble(Vector(1.0, 1.0, 1.0).length() / 2.0)
+		this.startPoint = vector
+		this.endPoint = vector
+		this.speed = 0.0
+		if (params.isMoving) {
+			this.endPoint += Vector.random() * 5.0
+			this.speed = Random.nextDouble(10.0)
+		}
+	}
 
 	private var progress = 0.0
 	private var forward = true

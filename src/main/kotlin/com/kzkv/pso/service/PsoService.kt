@@ -10,14 +10,12 @@ import kotlin.math.pow
 @Service
 class PsoService(
     private val jsonService: JsonService,
-    private val obstacleService: ObstacleService
 ) {
     private var route : List<Vector> = emptyList()
-    private var obstacles : List<Obstacle> = emptyList()
+    var obstacles : List<Obstacle> = emptyList()
 
     fun findRoute(params: ParticleParams): List<Vector> {
         var restarts = 0
-        obstacles = obstacleService.readObstacles()
         while (restarts < 100) {
             val start = params.endpoints.first()
             val goal = params.endpoints.last()
@@ -71,8 +69,8 @@ class PsoService(
 
     private fun isNotLineIntersectsObstacle(startPoint: Vector, endPoint: Vector): Boolean {
         return obstacles.none { obstacle ->
-            val ab = Vector(startPoint, endPoint)
-            val ap = Vector(startPoint, obstacle.center)
+            val ab = endPoint - startPoint
+            val ap = obstacle.center - startPoint
             val abxap = Vector.vektor(ab, ap)
             val isProject = (Vector.scalar(ap, ab) / ab.length().pow(2)) in 0.0..1.0
             val distance = abxap.length() / ab.length()

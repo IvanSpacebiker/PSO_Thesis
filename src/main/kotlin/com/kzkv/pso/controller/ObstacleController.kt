@@ -1,6 +1,6 @@
 package com.kzkv.pso.controller
 
-import com.kzkv.pso.data.ObstacleParams
+import com.kzkv.pso.data.Params
 import com.kzkv.pso.entity.Obstacle
 import com.kzkv.pso.service.ObstacleService
 import org.springframework.http.ResponseEntity
@@ -19,8 +19,13 @@ class ObstacleController(private val obstacleService: ObstacleService) {
 		return ResponseEntity.ok(obstacleService.readObstacles())
 	}
 
+//	@PostMapping
+//	fun writeObstacles(@RequestBody params: ObstacleParams) : ResponseEntity<List<Obstacle>> {
+//		return ResponseEntity.ok(obstacleService.createObstacles(params))
+//	}
+
 	@PostMapping
-	fun writeObstacles(@RequestBody params: ObstacleParams) : ResponseEntity<List<Obstacle>> {
+	fun startProcess(@RequestBody params: Params) : ResponseEntity<List<Obstacle>> {
 		return ResponseEntity.ok(obstacleService.createObstacles(params))
 	}
 
