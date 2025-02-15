@@ -9,7 +9,7 @@ import kotlin.math.pow
 
 @Service
 class PsoService {
-	private var route: List<Vector> = emptyList()
+	var route: List<Vector> = emptyList()
 	var obstacles: List<Obstacle> = emptyList()
 
 	fun startPSO(params: ParticleParams): List<Vector> {
@@ -88,6 +88,10 @@ class PsoService {
 			val distance = abxap.length() / ab.length()
 			isProject && distance < obstacle.radius
 		}
+	}
+
+	fun clearRoute() {
+		route = emptyList()
 	}
 
 }
