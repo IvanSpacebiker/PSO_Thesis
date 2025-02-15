@@ -22,8 +22,10 @@ class ObstacleHandler(private val objectMapper: ObjectMapper) : TextWebSocketHan
         sessions.remove(session)
     }
 
-    fun broadcastObstacles(obstacles: List<Obstacle>, route: List<Vector>) {
+    fun broadcastObjects(obstacles: List<Obstacle>, route: List<Vector>): AggregateResult {
+        val result = AggregateResult(obstacles, route)
         val message = objectMapper.writeValueAsString(AggregateResult(obstacles, route))
         sessions.forEach { it.sendMessage(TextMessage(message)) }
+        return result
     }
 }

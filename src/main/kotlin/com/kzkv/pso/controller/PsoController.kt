@@ -14,6 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 class PsoController(private val psoService: PsoService) {
 	@PostMapping
 	fun findRoute(@RequestBody params: ParticleParams): ResponseEntity<List<Vector>> {
-		return ResponseEntity.ok(psoService.findRoute(params))
+		return ResponseEntity.ok(psoService.startPSO(params))
 	}
 }

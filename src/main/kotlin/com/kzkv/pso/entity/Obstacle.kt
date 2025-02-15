@@ -24,7 +24,7 @@ data class Obstacle(
 		this.speed = 0.0
 		if (params.isMoving) {
 			this.endPoint += Vector.random() * 5.0
-			this.speed = Random.nextDouble(10.0)
+			this.speed = Random.nextDouble(1.0)
 		}
 	}
 

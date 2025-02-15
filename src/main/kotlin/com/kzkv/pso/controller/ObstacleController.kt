@@ -19,13 +19,8 @@ class ObstacleController(private val obstacleService: ObstacleService) {
 		return ResponseEntity.ok(obstacleService.readObstacles())
 	}
 
-//	@PostMapping
-//	fun writeObstacles(@RequestBody params: ObstacleParams) : ResponseEntity<List<Obstacle>> {
-//		return ResponseEntity.ok(obstacleService.createObstacles(params))
-//	}
-
 	@PostMapping
-	fun startProcess(@RequestBody params: Params) : ResponseEntity<List<Obstacle>> {
+	fun writeObstacles(@RequestBody params: Params) : ResponseEntity<List<Obstacle>> {
 		return ResponseEntity.ok(obstacleService.createObstacles(params))
 	}
 

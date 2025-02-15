@@ -29,13 +29,4 @@ class JsonService {
 		mapper.writerWithDefaultPrettyPrinter().writeValue(routeJson.bufferedWriter(), route)
 		return route
 	}
-
-//	fun writeStatistics(pso: PsoService, n: Int) {
-//		val psoList = arrayListOf<PSOData>()
-//		for (i in 0..< n) {
-//			pso.findRouteWithMetrics()
-//			psoList.add(pso.createPSOData())
-//		}
-//		mapper.writerWithDefaultPrettyPrinter().writeValue(statisticsJson.bufferedWriter(), psoList)
-//	}
 }

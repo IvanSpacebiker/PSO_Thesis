@@ -9,7 +9,7 @@
         body {
             margin: 0;
             display: flex;
-            overflow: hidden
+            overflow: hidden;
         }
 
         #controls {
@@ -17,7 +17,12 @@
             background: #f8f8f8;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 10px;
+            height: 100vh;
+            overflow-y: auto;
+            width: 300px;
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         canvas {
@@ -28,7 +33,7 @@
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 2px;
         }
 
         .input {
@@ -48,6 +53,10 @@
 
         .btn:hover {
             background: #303f9f;
+        }
+
+        h3 {
+            margin: 0 0 5px 0;
         }
     </style>
 </head>
@@ -101,6 +110,8 @@
         <input id="numIterations" type="number" value="25" class="input">
     </div>
     <button class="btn" onclick="findRoute()">Найти маршрут</button>
+    <button class="btn" onclick="start()">Старт</button>
+    <button class="btn" onclick="stop()">Стоп</button>
 </div>
 
 <script>
@@ -154,7 +165,6 @@
         scene.add(pointLight);
 
         window.addEventListener("resize", onWindowResize);
-        loadObstacles();
         animate();
     }
 
@@ -263,7 +273,33 @@
 
         trajectoryLine = new THREE.Line(geometry, material);
         scene.add(trajectoryLine);
+    }
 
+    function start() {
+        const params = {
+            w: parseFloat(document.getElementById("w").value),
+            alpha: parseFloat(document.getElementById("alpha").value),
+            c1: parseFloat(document.getElementById("c1").value),
+            c2: parseFloat(document.getElementById("c2").value),
+            numberOfParticles: parseInt(document.getElementById("numParticles").value),
+            numberOfIterations: parseInt(document.getElementById("numIterations").value),
+            endpoints: [
+                {x: 0, y: 0, z: 0},
+                {x: 10, y: 10, z: 10}
+            ]
+        };
+        fetch("/start", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(params)
+        });
+    }
+
+    function stop() {
+        fetch("/stop", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"}
+        });
     }
 
     function animate() {
