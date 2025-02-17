@@ -5,6 +5,7 @@ import com.kzkv.pso.data.ParticleParams
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -16,13 +17,14 @@ open class AnimationService(
 	private var moving = false
 	private var startPointMoving = false
 	private lateinit var params: ParticleParams
+	private var scheduledTask: ScheduledFuture<*>? = null
 
 	@Async
 	open fun startAnimation(params: ParticleParams) {
 		setParams(params)
-		if (moving) return
+		if (moving) stopAnimation()
 		moving = true
-		executor.scheduleAtFixedRate({
+		scheduledTask = executor.scheduleAtFixedRate({
 			if (!moving) return@scheduleAtFixedRate
 			if (startPointMoving) this.params.endpoints[0] = this.params.endpoints[0] + (psoService.route[1] - psoService.route[0]) * 0.02
 			psoService.obstacles.forEach { it.move() }
@@ -31,6 +33,7 @@ open class AnimationService(
 	}
 
 	fun stopAnimation() {
+		scheduledTask?.cancel(false)
 		moving = false
 	}
 

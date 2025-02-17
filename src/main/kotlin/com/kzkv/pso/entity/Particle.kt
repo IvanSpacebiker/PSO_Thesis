@@ -13,17 +13,17 @@ class Particle(var position: Vector, private var velocity: Vector, var bestPosit
 		position += newVelocity
 	}
 
-	fun getParticleBestPosition(goal: Vector, obstacles: List<Obstacle>) {
+	fun getParticleBestPosition(goal: Vector, radius: Double, obstacles: List<Obstacle>) {
 		if (Vector.getDistance(this.position, goal) < Vector.getDistance(this.bestPosition, goal)
-			&& isNotPointIntersectsObstacle(this.position, obstacles)
+			&& isNotPointIntersectsObstacle(this.position, radius, obstacles)
 		) {
 			this.bestPosition = this.position.copy()
 		}
 	}
 
-	private fun isNotPointIntersectsObstacle(point: Vector, obstacles: List<Obstacle>): Boolean {
+	private fun isNotPointIntersectsObstacle(point: Vector, radius: Double, obstacles: List<Obstacle>): Boolean {
 		return obstacles.none { obstacle ->
-			Vector.getDistance(point, obstacle.center) < obstacle.radius
+			Vector.getDistance(point, obstacle.center) - radius < obstacle.radius
 		}
 	}
 }

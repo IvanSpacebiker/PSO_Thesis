@@ -7,5 +7,6 @@ data class ParticleParams(
 	val c2 : Double,
 	val numberOfParticles : Int,
 	val numberOfIterations : Int,
-	val endpoints : ArrayList<Vector>
+	val endpoints : ArrayList<Vector>,
+	val radius : Double
 )

@@ -23,26 +23,28 @@ class PsoService {
 		repeat(params.numberOfIterations) {
 			particles.forEach { particle ->
 				particle.move(bestGlobalPosition, inertia, params)
-				particle.getParticleBestPosition(goal, obstacles)
+				particle.getParticleBestPosition(goal, params.radius, obstacles)
 
-				if (shouldUpdateBestGlobal(particle, bestGlobalPosition, goal, bestGlobalRoute)) {
+				if (shouldUpdateBestGlobal(particle, bestGlobalPosition, goal, bestGlobalRoute, params.radius)) {
 					bestGlobalPosition = particle.bestPosition.copy()
-					optimizeBestRoute(bestGlobalRoute, bestGlobalPosition)
+					optimizeBestRoute(bestGlobalRoute, bestGlobalPosition, params.radius)
 					bestGlobalRoute.add(bestGlobalPosition)
 				}
 			}
 			inertia *= params.alpha
 		}
-		if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
+		val isRouteValid = isRouteValid(route, params.radius)
+		if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal, params.radius)) {
 			bestGlobalRoute.add(goal)
-			route = if (route.isEmpty() || !isRouteValid(route)) bestGlobalRoute else getShortestRoute(route, bestGlobalRoute)
+			route = if (route.isEmpty() || !isRouteValid) bestGlobalRoute else getShortestRoute(route, bestGlobalRoute)
 		}
+		if (!isRouteValid) return emptyList()
 		return route
 	}
 
-	private fun isRouteValid(route: List<Vector>) : Boolean {
+	private fun isRouteValid(route: List<Vector>, radius: Double) : Boolean {
 		for (i in 0..route.size - 2) {
-			if (!isNotLineIntersectsObstacle(route[i], route[i+1])) return false
+			if (!isNotLineIntersectsObstacle(route[i], route[i+1], radius)) return false
 		}
 		return true
 	}
@@ -63,30 +65,32 @@ class PsoService {
 		particle: Particle,
 		bestGlobalPosition: Vector,
 		goal: Vector,
-		bestGlobalRoute: List<Vector>
+		bestGlobalRoute: List<Vector>,
+		radius: Double
 	): Boolean {
 		return Vector.getDistance(particle.bestPosition, goal) < Vector.getDistance(bestGlobalPosition, goal) &&
-				isNotLineIntersectsObstacle(bestGlobalRoute.last(), particle.bestPosition)
+				isNotLineIntersectsObstacle(bestGlobalRoute.last(), particle.bestPosition, radius)
 	}
 
-	private fun optimizeBestRoute(bestGlobalRoute: MutableList<Vector>, bestGlobalPosition: Vector) {
+	private fun optimizeBestRoute(bestGlobalRoute: MutableList<Vector>, bestGlobalPosition: Vector, radius: Double) {
 		if (bestGlobalRoute.size > 1 && isNotLineIntersectsObstacle(
 				bestGlobalRoute[bestGlobalRoute.lastIndex - 1],
-				bestGlobalPosition
+				bestGlobalPosition,
+				radius
 			)
 		) {
 			bestGlobalRoute.removeLast()
 		}
 	}
 
-	private fun isNotLineIntersectsObstacle(startPoint: Vector, endPoint: Vector): Boolean {
+	private fun isNotLineIntersectsObstacle(startPoint: Vector, endPoint: Vector, radius: Double): Boolean {
 		return obstacles.none { obstacle ->
 			val ab = endPoint - startPoint
 			val ap = obstacle.center - startPoint
 			val abxap = Vector.vektor(ab, ap)
 			val isProject = (Vector.scalar(ap, ab) / ab.length().pow(2)) in 0.0..1.0
 			val distance = abxap.length() / ab.length()
-			isProject && distance < obstacle.radius
+			isProject && (distance - radius) < obstacle.radius
 		}
 	}
 
