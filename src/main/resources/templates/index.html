@@ -83,6 +83,8 @@
         <input id="moving" type="checkbox"> Движущиеся
     </label>
     <button class="btn" onclick="createObstacles()">Создать</button>
+    <button class="btn" onclick="readObstacles()">Загрузить локацию</button>
+    <button class="btn" onclick="writeObstacles()">Сохранить локацию</button>
 
     <h3>Частицы</h3>
     <div class="form-group">
@@ -130,8 +132,9 @@
 <script>
     let scene, camera, renderer, controls, trajectoryLine;
     let obstacles = [];
+    let obstacleData = [];
 
-    let socket = new WebSocket("ws://localhost:8080/ws/obstacles");
+    let socket = new WebSocket("ws://localhost:8080/ws");
 
     socket.onmessage = function (event) {
         let aggregateResult = JSON.parse(event.data);
@@ -235,7 +238,11 @@
             .then(res => res.json())
             .then(data => {
                 clearObstacles();
-                data.forEach(obstacle => addObstacle(obstacle));
+                data.forEach(obstacle => {
+                    addObstacle(obstacle)
+                    console.log(obstacle)
+                    obstacleData.push(obstacle)
+                });
             });
     }
 
@@ -253,6 +260,26 @@
     function clearObstacles() {
         obstacles.forEach(obj => scene.remove(obj));
         obstacles = [];
+    }
+
+    function readObstacles() {
+        fetch("/obstacle/json", {
+            method: "GET",
+            headers: {"Content-Type": "application/json"}
+        })
+            .then(res => res.json())
+            .then(data => {
+                clearObstacles();
+                data.forEach(obstacle => addObstacle(obstacle));
+            });
+    }
+
+    function writeObstacles() {
+        fetch("/obstacle/json", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(obstacleData)
+        });
     }
 
     function findRoute() {

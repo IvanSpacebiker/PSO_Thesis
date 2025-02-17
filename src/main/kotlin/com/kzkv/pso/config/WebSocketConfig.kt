@@ -7,8 +7,8 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @Configuration
 @EnableWebSocket
-open class WebSocketConfig(private val obstacleHandler: ObstacleHandler) : WebSocketConfigurer {
+open class WebSocketConfig(private val webSocketHandler: WebSocketHandler) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(obstacleHandler, "/ws/obstacles").setAllowedOrigins("*")
+        registry.addHandler(webSocketHandler, "/ws").setAllowedOrigins("*")
     }
 }

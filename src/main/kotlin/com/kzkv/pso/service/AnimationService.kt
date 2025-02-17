@@ -1,6 +1,6 @@
 package com.kzkv.pso.service
 
-import com.kzkv.pso.config.ObstacleHandler
+import com.kzkv.pso.config.WebSocketHandler
 import com.kzkv.pso.data.ParticleParams
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 @Service
 open class AnimationService(
 	private val psoService: PsoService,
-	private val obstacleHandler: ObstacleHandler
+	private val webSocketHandler: WebSocketHandler
 ) {
 	private val executor = Executors.newScheduledThreadPool(1)
 	private var moving = false
@@ -26,7 +26,7 @@ open class AnimationService(
 			if (!moving) return@scheduleAtFixedRate
 			if (startPointMoving) this.params.endpoints[0] = this.params.endpoints[0] + (psoService.route[1] - psoService.route[0]) * 0.02
 			psoService.obstacles.forEach { it.move() }
-			obstacleHandler.broadcastObjects(psoService.obstacles, psoService.startPSO(this.params))
+			webSocketHandler.broadcastObjects(psoService.obstacles, psoService.startPSO(this.params))
 		}, 0, 40, TimeUnit.MILLISECONDS)
 	}
 

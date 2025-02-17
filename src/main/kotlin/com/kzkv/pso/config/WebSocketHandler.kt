@@ -11,7 +11,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Component
-class ObstacleHandler(private val objectMapper: ObjectMapper) : TextWebSocketHandler() {
+class WebSocketHandler(private val objectMapper: ObjectMapper) : TextWebSocketHandler() {
     private val sessions = CopyOnWriteArrayList<WebSocketSession>()
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
