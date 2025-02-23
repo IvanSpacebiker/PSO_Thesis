@@ -9,12 +9,16 @@ import kotlin.math.pow
 
 @Service
 class PsoService {
-	var route: List<Vector> = emptyList()
+	var route: ArrayList<Vector> = arrayListOf()
 	var obstacles: List<Obstacle> = emptyList()
 
 	fun startPSO(params: ParticleParams): List<Vector> {
-        val start = params.endpoints.first()
+		val start = params.endpoints.first()
 		val goal = params.endpoints.last()
+		if (route.isNotEmpty()) {
+			route[0] = start
+			if ((route[0] - route[1]).length() < 0.2) route.removeAt(1)
+		}
 		val particles = List(params.numberOfParticles) { Particle(start, Vector(-1.0, 1.0), start) }
 		var bestGlobalPosition = start.copy()
 		val bestGlobalRoute = arrayListOf(start)
@@ -49,7 +53,7 @@ class PsoService {
 		return true
 	}
 
-	private fun getShortestRoute(r1: List<Vector>, r2: List<Vector>) : List<Vector> {
+	private fun getShortestRoute(r1: ArrayList<Vector>, r2: ArrayList<Vector>) : ArrayList<Vector> {
 		var r1Length = 0.0
 		var r2Length = 0.0
 		for (i in 0..r1.size - 2) {
@@ -95,7 +99,7 @@ class PsoService {
 	}
 
 	fun clearRoute() {
-		route = emptyList()
+		route = arrayListOf()
 	}
 
 }

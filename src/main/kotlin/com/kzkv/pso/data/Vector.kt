@@ -40,6 +40,12 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
 		return sqrt(x.pow(2.0) + y.pow(2.0) + z.pow(2.0))
 	}
 
+	fun normalize(): Vector {
+		val length = this.length()
+		return if (length > 1e-6) this / length else Vector(0.0, 0.0, 0.0)
+	}
+
+
 	operator fun plus(other: Vector) : Vector {
 		return Vector(x + other.x, y + other.y, z + other.z)
 	}
@@ -50,5 +56,9 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
 
 	operator fun times(number: Double) : Vector {
 		return Vector(x * number, y * number, z * number)
+	}
+
+	operator fun div(number: Double) : Vector {
+		return Vector(x / number, y / number, z / number)
 	}
 }

@@ -100,10 +100,6 @@
         <input id="z22" type="number" value="10" class="input" placeholder="Z2">
     </div>
     <div class="form-group">
-        <label>Radius</label>
-        <input id="radius" type="number" step="0.01" value="0.2" class="input">
-    </div>
-    <div class="form-group">
         <label>W</label>
         <input id="w" type="number" step="0.01" value="0.9" class="input">
     </div>
@@ -130,11 +126,26 @@
     <button class="btn" onclick="findRoute()">Найти маршрут</button>
     <button class="btn" onclick="start()">Старт</button>
     <button class="btn" onclick="stop()">Стоп</button>
-    <button class="btn" onclick="startPointMoving()">Движение объекта</button>
+
+    <h3>Объект</h3>
+    <button class="btn" onclick="initQuadcopter()">Создать</button>
+    <button class="btn" onclick="startPointMoving()">Движение</button>
+    <div class="form-group">
+        <label>Радиус</label>
+        <input id="radius" type="number" step="0.01" value="0.2" class="input">
+    </div>
+    <div class="form-group">
+        <label>Гравитация</label>
+        <input id="gravity" type="number" step="0.01" value="9.8" class="input">
+    </div>
+    <div class="form-group">
+        <label>Масса</label>
+        <input id="mass" type="number" step="0.01" value="2" class="input">
+    </div>
 </div>
 
 <script>
-    let scene, camera, renderer, controls, trajectoryLine, radius;
+    let scene, camera, renderer, controls, trajectoryLine, radius, object;
     let obstacles = [];
     let obstacleData = [];
 
@@ -331,8 +342,18 @@
             trajectoryLine.forEach(cylinder => scene.remove(cylinder));
         }
         trajectoryLine = [];
+        if (object) {
+            scene.remove(object)
+        }
 
-        const cylinderMaterial = new THREE.MeshBasicMaterial({ color: "lime" });
+        const cylinderMaterial = new THREE.MeshBasicMaterial({color: "lime", transparent: true, opacity: 0.3});
+
+        const objectGeometry = new THREE.SphereGeometry(radius / 4, 32, 32);
+        const objectMaterial = new THREE.MeshBasicMaterial({ color: "blue" });
+        object = new THREE.Mesh(objectGeometry, objectMaterial);
+        object.position.set(points[0].x, points[0].y, points[0].z);
+        object.castShadow = true;
+        scene.add(object);
 
         for (let i = 0; i < points.length - 1; i++) {
             const p1 = new THREE.Vector3(points[i].x, points[i].y, points[i].z);
@@ -400,6 +421,19 @@
             method: "POST",
             headers: {"Content-Type": "application/json"}
         });
+    }
+
+    function initQuadcopter() {
+        const radius = document.getElementById("radius").value;
+        const gravity = document.getElementById("gravity").value;
+        const mass = document.getElementById("mass").value;
+
+        fetch('/quadcopter/initialize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ radius, gravity, mass })
+        }).then(response => response.text())
+            .then(data => alert(data));
     }
 
     function animate() {
