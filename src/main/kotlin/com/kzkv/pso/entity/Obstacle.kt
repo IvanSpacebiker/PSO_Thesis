@@ -12,9 +12,10 @@ data class Obstacle(
 	var radius: Double,
 	var startPoint: Vector,
 	var endPoint: Vector,
-	var speed: Double
+	var speed: Double,
+	var visible: Boolean
 ) {
-	constructor() : this(UUID.randomUUID().toString(), Vector(), 0.0, Vector(), Vector(), 0.0)
+	constructor() : this(UUID.randomUUID().toString(), Vector(), 0.0, Vector(), Vector(), 0.0, false)
 	constructor(params: ObstacleParams) : this() {
 		val vector = Vector(params.endpoints.first(), params.endpoints.last())
 		this.center = vector

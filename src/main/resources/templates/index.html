@@ -147,6 +147,7 @@
     function updateObstacle(obstacle) {
         let mesh = scene.getObjectByName(obstacle.id);
         if (mesh) {
+            mesh.material.color.setHex(obstacle.visible ? 0xff0000 : 0x1e1e1e)
             mesh.position.set(obstacle.center.x, obstacle.center.y, obstacle.center.z);
         }
     }
