@@ -100,16 +100,41 @@ class PsoService {
 		obstacles.forEach { it.visible = false }
 
 		val obstaclesInFOV = obstacles.filter { obstacle ->
-			val toObstacle = obstacle.center - start
+			val toCenter = obstacle.center - start
 			val viewDirection = goal - start
-			val angle = Vector.angleBetween(viewDirection.normalized(), toObstacle.normalized())
+			val angleToCenter = Vector.angleBetween(viewDirection.normalized(), toCenter.normalized())
 
-			angle <= fovAngle / 2
-		}.sortedBy { Vector.getDistance(it.center, start) }
+			angleToCenter <= fovAngle / 2
+		}
 
 		for (obstacle in obstaclesInFOV) {
-			if (isNotLineIntersectsObstacle(start, obstacle.center, 0.0)) obstacle.visible = true
+			val surfacePoints = generateSurfacePoints(obstacle)
+
+			val isVisible = surfacePoints.any { surfacePoint ->
+				isNotLineIntersectsObstacle(start, surfacePoint, 0.0)
+			}
+
+			if (isVisible) {
+				obstacle.visible = true
+			}
 		}
+	}
+
+	private fun generateSurfacePoints(obstacle: Obstacle, numPoints: Int = 8): List<Vector> {
+		val surfacePoints = mutableListOf<Vector>()
+		val angleStep = 2 * PI / numPoints
+
+		for (i in 0 until numPoints) {
+			val theta = i * angleStep
+			for (j in 0 until numPoints) {
+				val phi = j * angleStep
+				val x = obstacle.center.x + obstacle.radius * kotlin.math.sin(phi) * kotlin.math.cos(theta)
+				val y = obstacle.center.y + obstacle.radius * kotlin.math.sin(phi) * kotlin.math.sin(theta)
+				val z = obstacle.center.z + obstacle.radius * kotlin.math.cos(phi)
+				surfacePoints.add(Vector(x, y, z))
+			}
+		}
+		return surfacePoints
 	}
 
 }
