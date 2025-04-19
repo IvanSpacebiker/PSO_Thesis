@@ -22,9 +22,4 @@ class AnimationController(private val animationService: AnimationService) {
 		return ResponseEntity.ok(animationService.stopAnimation())
 	}
 
-	@PostMapping("startPoint")
-	fun startPointAnimation() : ResponseEntity<Unit> {
-		return ResponseEntity.ok(animationService.moveStartPoint())
-	}
-
 }

@@ -11,34 +11,30 @@ import java.util.concurrent.TimeUnit
 @Service
 open class AnimationService(
 	private val psoService: PsoService,
-	private val webSocketHandler: WebSocketHandler
+	private val webSocketHandler: WebSocketHandler,
+	private val statisticService: StatisticService,
 ) {
 	private val executor = Executors.newScheduledThreadPool(1)
-	private var moving = false
-	private var startPointMoving = false
+	private var isStarted = false
 	private lateinit var params: ParticleParams
 	private var scheduledTask: ScheduledFuture<*>? = null
 
 	@Async
 	open fun startAnimation(params: ParticleParams) {
 		setParams(params)
-		if (moving) return
-		moving = true
+		if (isStarted) return
+		isStarted = true
+		statisticService.clearStats()
 		scheduledTask = executor.scheduleAtFixedRate({
-			if (!moving) return@scheduleAtFixedRate
-			if (startPointMoving) this.params.endpoints[0] = this.params.endpoints[0] + (psoService.route[1] - psoService.route[0]) * 0.02
-			psoService.obstacles.forEach { it.move() }
+			if (!isStarted) return@scheduleAtFixedRate
 			webSocketHandler.broadcastObjects(psoService.obstacles, psoService.startPSO(this.params))
 		}, 0, 40, TimeUnit.MILLISECONDS)
 	}
 
 	fun stopAnimation() {
+		statisticService.writeStatistic()
 		scheduledTask?.cancel(false)
-		moving = false
-	}
-
-	fun moveStartPoint() {
-		startPointMoving = !startPointMoving
+		isStarted = false
 	}
 
 	private fun setParams(params: ParticleParams) {

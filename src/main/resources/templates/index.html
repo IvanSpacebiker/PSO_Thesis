@@ -79,18 +79,11 @@
         <input id="y12" type="number" value="9" class="input" placeholder="Y2">
         <input id="z12" type="number" value="9" class="input" placeholder="Z2">
     </div>
-    <label>
-        <input id="moving" type="checkbox"> Движущиеся
-    </label>
     <button class="btn" onclick="createObstacles()">Создать</button>
     <button class="btn" onclick="readObstacles()">Загрузить локацию</button>
     <button class="btn" onclick="writeObstacles()">Сохранить локацию</button>
 
     <h3>Частицы</h3>
-    <div class="form-group">
-        <label>Радиус</label>
-        <input id="radius" type="number" step="0.01" value="0.2" class="input">
-    </div>
     <div class="form-group">
         <label>Координаты начала</label>
         <input id="x21" type="number" value="0" class="input" placeholder="X1">
@@ -130,11 +123,10 @@
     <button class="btn" onclick="findRoute()">Найти маршрут</button>
     <button class="btn" onclick="start()">Старт</button>
     <button class="btn" onclick="stop()">Стоп</button>
-    <button class="btn" onclick="startPointMoving()">Движение объекта</button>
 </div>
 
 <script>
-    let scene, camera, renderer, controls, trajectoryLine, radius, object;
+    let scene, camera, renderer, controls, trajectoryLine;
     let obstacles = [];
     let obstacleData = [];
 
@@ -151,7 +143,6 @@
     function updateObstacle(obstacle) {
         let mesh = scene.getObjectByName(obstacle.id);
         if (mesh) {
-            mesh.material.color.setHex(obstacle.visible ? 0xff0000 : 0x1e1e1e)
             mesh.position.set(obstacle.center.x, obstacle.center.y, obstacle.center.z);
         }
     }
@@ -220,7 +211,6 @@
                         z: parseFloat(document.getElementById("z12").value)
                     }
                 ],
-                isMoving: document.getElementById("moving").checked
             },
             particleParams: {
                 w: parseFloat(document.getElementById("w").value),
@@ -241,7 +231,6 @@
                         z: parseFloat(document.getElementById("z22").value)
                     }
                 ],
-                radius: parseFloat(document.getElementById("radius").value)
             }
         };
         fetch("/obstacle", {
@@ -273,10 +262,11 @@
     function clearObstacles() {
         obstacles.forEach(obj => scene.remove(obj));
         obstacles = [];
+        obstacleData = [];
     }
 
     function readObstacles() {
-        fetch("/obstacle/json", {
+        fetch("/json/obstacle", {
             method: "GET",
             headers: {"Content-Type": "application/json"}
         })
@@ -288,7 +278,7 @@
     }
 
     function writeObstacles() {
-        fetch("/obstacle/json", {
+        fetch("/json/obstacle", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(obstacleData)
@@ -314,10 +304,8 @@
                     y: parseFloat(document.getElementById("y22").value),
                     z: parseFloat(document.getElementById("z22").value)
                 }
-            ],
-            radius: parseFloat(document.getElementById("radius").value)
+            ]
         };
-        radius = params.radius
         fetch("/pso", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
@@ -328,45 +316,14 @@
     }
 
     function drawRoute(points) {
-        if (trajectoryLine) {
-            trajectoryLine.forEach(cylinder => scene.remove(cylinder));
-        }
-        trajectoryLine = [];
-        if (object) {
-            scene.remove(object)
-        }
+        if (trajectoryLine) scene.remove(trajectoryLine);
 
-        const cylinderMaterial = new THREE.MeshBasicMaterial({color: "lime", transparent: true, opacity: 0.3});
+        const path = points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+        const geometry = new THREE.BufferGeometry().setFromPoints(path);
+        const material = new THREE.LineBasicMaterial({color: "lime", linewidth: 2});
 
-        const objectGeometry = new THREE.SphereGeometry(radius / 4, 32, 32);
-        const objectMaterial = new THREE.MeshBasicMaterial({ color: "blue" });
-        object = new THREE.Mesh(objectGeometry, objectMaterial);
-        object.position.set(points[0].x, points[0].y, points[0].z);
-        object.castShadow = true;
-        scene.add(object);
-
-        for (let i = 0; i < points.length - 1; i++) {
-            const p1 = new THREE.Vector3(points[i].x, points[i].y, points[i].z);
-            const p2 = new THREE.Vector3(points[i + 1].x, points[i + 1].y, points[i + 1].z);
-
-            const direction = new THREE.Vector3().subVectors(p2, p1);
-            const length = direction.length();
-            const midpoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-            direction.normalize();
-
-            const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, length, 10);
-            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-
-            const axis = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
-            const angle = Math.acos(new THREE.Vector3(0, 1, 0).dot(direction));
-
-            cylinder.position.copy(midpoint);
-            if (axis.length() > 0) {
-                cylinder.quaternion.setFromAxisAngle(axis, angle);
-            }
-            scene.add(cylinder);
-            trajectoryLine.push(cylinder);
-        }
+        trajectoryLine = new THREE.Line(geometry, material);
+        scene.add(trajectoryLine);
     }
 
     function start() {
@@ -388,10 +345,8 @@
                     y: parseFloat(document.getElementById("y22").value),
                     z: parseFloat(document.getElementById("z22").value)
                 }
-            ],
-            radius: parseFloat(document.getElementById("radius").value)
+            ]
         };
-        radius = params.radius
         fetch("/start", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
@@ -405,14 +360,6 @@
             headers: {"Content-Type": "application/json"}
         });
     }
-
-    function startPointMoving() {
-        fetch("/startPoint", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"}
-        });
-    }
-
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
