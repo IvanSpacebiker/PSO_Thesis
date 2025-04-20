@@ -79,6 +79,9 @@
         <input id="y12" type="number" value="9" class="input" placeholder="Y2">
         <input id="z12" type="number" value="9" class="input" placeholder="Z2">
     </div>
+    <label>
+        <input id="moving" type="checkbox"> Движущиеся
+    </label>
     <button class="btn" onclick="createObstacles()">Создать</button>
     <button class="btn" onclick="readObstacles()">Загрузить локацию</button>
     <button class="btn" onclick="writeObstacles()">Сохранить локацию</button>
@@ -211,6 +214,7 @@
                         z: parseFloat(document.getElementById("z12").value)
                     }
                 ],
+                isMoving: document.getElementById("moving").checked
             },
             particleParams: {
                 w: parseFloat(document.getElementById("w").value),

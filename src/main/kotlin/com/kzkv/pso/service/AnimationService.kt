@@ -27,6 +27,7 @@ open class AnimationService(
 		statisticService.clearStats()
 		scheduledTask = executor.scheduleAtFixedRate({
 			if (!isStarted) return@scheduleAtFixedRate
+			psoService.obstacles.forEach { it.move() }
 			webSocketHandler.broadcastObjects(psoService.obstacles, psoService.startPSO(this.params))
 		}, 0, 40, TimeUnit.MILLISECONDS)
 	}
