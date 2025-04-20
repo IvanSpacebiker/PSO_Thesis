@@ -88,6 +88,10 @@
 
     <h3>Частицы</h3>
     <div class="form-group">
+        <label>Радиус</label>
+        <input id="radius" type="number" step="0.1" value="0.2" class="input">
+    </div>
+    <div class="form-group">
         <label>Координаты начала</label>
         <input id="x21" type="number" value="0" class="input" placeholder="X1">
         <input id="y21" type="number" value="0" class="input" placeholder="Y1">
@@ -129,7 +133,7 @@
 </div>
 
 <script>
-    let scene, camera, renderer, controls, trajectoryLine;
+    let scene, camera, renderer, controls, trajectoryLine, radius;
     let obstacles = [];
     let obstacleData = [];
 
@@ -235,6 +239,7 @@
                         z: parseFloat(document.getElementById("z22").value)
                     }
                 ],
+                radius: parseFloat(document.getElementById("radius").value)
             }
         };
         fetch("/obstacle", {
@@ -308,8 +313,10 @@
                     y: parseFloat(document.getElementById("y22").value),
                     z: parseFloat(document.getElementById("z22").value)
                 }
-            ]
+            ],
+            radius: parseFloat(document.getElementById("radius").value)
         };
+        radius = params.radius
         fetch("/pso", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
@@ -320,14 +327,35 @@
     }
 
     function drawRoute(points) {
-        if (trajectoryLine) scene.remove(trajectoryLine);
+        if (trajectoryLine) {
+            trajectoryLine.forEach(cylinder => scene.remove(cylinder));
+        }
+        trajectoryLine = [];
 
-        const path = points.map(p => new THREE.Vector3(p.x, p.y, p.z));
-        const geometry = new THREE.BufferGeometry().setFromPoints(path);
-        const material = new THREE.LineBasicMaterial({color: "lime", linewidth: 2});
+        const cylinderMaterial = new THREE.MeshBasicMaterial({color: "lime", transparent: true, opacity: 0.3});
 
-        trajectoryLine = new THREE.Line(geometry, material);
-        scene.add(trajectoryLine);
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = new THREE.Vector3(points[i].x, points[i].y, points[i].z);
+            const p2 = new THREE.Vector3(points[i + 1].x, points[i + 1].y, points[i + 1].z);
+
+            const direction = new THREE.Vector3().subVectors(p2, p1);
+            const length = direction.length();
+            const midpoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+            direction.normalize();
+
+            const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, length, 10);
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+
+            const axis = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
+            const angle = Math.acos(new THREE.Vector3(0, 1, 0).dot(direction));
+
+            cylinder.position.copy(midpoint);
+            if (axis.length() > 0) {
+                cylinder.quaternion.setFromAxisAngle(axis, angle);
+            }
+            scene.add(cylinder);
+            trajectoryLine.push(cylinder);
+        }
     }
 
     function start() {
@@ -349,8 +377,10 @@
                     y: parseFloat(document.getElementById("y22").value),
                     z: parseFloat(document.getElementById("z22").value)
                 }
-            ]
+            ],
+            radius: parseFloat(document.getElementById("radius").value)
         };
+        radius = params.radius
         fetch("/start", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
