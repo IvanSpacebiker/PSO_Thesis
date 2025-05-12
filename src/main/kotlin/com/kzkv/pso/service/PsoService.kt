@@ -20,7 +20,7 @@ class PsoService(private val statisticService: StatisticService) {
 		val bestGlobalRoute = arrayListOf(start)
 		var inertia = params.w
 
-		val startTime = System.currentTimeMillis()
+		val startTime = System.nanoTime()
 		for(i in 0 until params.numberOfIterations) {
 			if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
 				bestGlobalRoute.add(goal)
@@ -39,7 +39,7 @@ class PsoService(private val statisticService: StatisticService) {
 			}
 			inertia *= params.alpha
 		}
-		val endTime = System.currentTimeMillis()
+		val endTime = System.nanoTime()
 		statisticService.addStats(startTime, endTime, route)
 		return route
 	}
