@@ -126,6 +126,7 @@
     <button class="btn" onclick="findRoute()">Найти маршрут</button>
     <button class="btn" onclick="start()">Старт</button>
     <button class="btn" onclick="stop()">Стоп</button>
+    <button class="btn" onclick="test()">Тест</button>
 </div>
 
 <script>
@@ -364,6 +365,53 @@
             headers: {"Content-Type": "application/json"}
         });
     }
+
+    function test() {
+        const params = {
+            obstacleParams: {
+                numberOfObstacles: parseInt(document.getElementById("numObstacles").value),
+                endpoints: [
+                    {
+                        x: parseFloat(document.getElementById("x11").value),
+                        y: parseFloat(document.getElementById("y11").value),
+                        z: parseFloat(document.getElementById("z11").value)
+                    },
+                    {
+                        x: parseFloat(document.getElementById("x12").value),
+                        y: parseFloat(document.getElementById("y12").value),
+                        z: parseFloat(document.getElementById("z12").value)
+                    }
+                ],
+                isMoving: document.getElementById("moving").checked
+            },
+            particleParams: {
+                w: parseFloat(document.getElementById("w").value),
+                alpha: parseFloat(document.getElementById("alpha").value),
+                c1: parseFloat(document.getElementById("c1").value),
+                c2: parseFloat(document.getElementById("c2").value),
+                numberOfParticles: parseInt(document.getElementById("numParticles").value),
+                numberOfIterations: parseInt(document.getElementById("numIterations").value),
+                endpoints: [
+                    {
+                        x: parseFloat(document.getElementById("x21").value),
+                        y: parseFloat(document.getElementById("y21").value),
+                        z: parseFloat(document.getElementById("z21").value)
+                    },
+                    {
+                        x: parseFloat(document.getElementById("x22").value),
+                        y: parseFloat(document.getElementById("y22").value),
+                        z: parseFloat(document.getElementById("z22").value)
+                    }
+                ],
+            }
+        };
+        fetch("obstacle/test", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(params)
+        });
+    }
+
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
