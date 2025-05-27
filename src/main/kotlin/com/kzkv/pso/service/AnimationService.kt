@@ -1,7 +1,7 @@
 package com.kzkv.pso.service
 
 import com.kzkv.pso.config.WebSocketHandler
-import com.kzkv.pso.data.ParticleParams
+import com.kzkv.pso.data.Params
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.concurrent.Executors
@@ -16,11 +16,11 @@ open class AnimationService(
 ) {
 	private val executor = Executors.newScheduledThreadPool(1)
 	private var isStarted = false
-	private lateinit var params: ParticleParams
+	private lateinit var params: Params
 	private var scheduledTask: ScheduledFuture<*>? = null
 
 	@Async
-	open fun startAnimation(params: ParticleParams) {
+	open fun startAnimation(params: Params) {
 		setParams(params)
 		if (isStarted) return
 		isStarted = true
@@ -38,7 +38,7 @@ open class AnimationService(
 		isStarted = false
 	}
 
-	private fun setParams(params: ParticleParams) {
+	private fun setParams(params: Params) {
 		psoService.clearRoute()
 		this.params = params
 	}

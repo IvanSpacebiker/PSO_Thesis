@@ -33,9 +33,10 @@ open class ObstacleService(
 
 	fun test(params: Params) : List<Statistic> {
 		statisticService.clearStats()
-		for (i in 10..1000 step 10) {
+		for (i in 10..5000 step 10) {
+			println("$i")
 			createObstacles(params, i)
-			psoService.startPSO(params.particleParams)
+			psoService.startPSO(params)
 			psoService.clearRoute()
 		}
 		return statisticService.writeStatistic()

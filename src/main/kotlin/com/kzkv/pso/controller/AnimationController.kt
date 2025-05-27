@@ -1,6 +1,6 @@
 package com.kzkv.pso.controller
 
-import com.kzkv.pso.data.ParticleParams
+import com.kzkv.pso.data.Params
 import com.kzkv.pso.service.AnimationService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 class AnimationController(private val animationService: AnimationService) {
 
 	@PostMapping("start")
-	fun startAnimation(@RequestBody params: ParticleParams) : ResponseEntity<Unit> {
+	fun startAnimation(@RequestBody params: Params) : ResponseEntity<Unit> {
 		return ResponseEntity.ok(animationService.startAnimation(params))
 	}
 

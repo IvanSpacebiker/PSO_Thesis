@@ -1,6 +1,7 @@
 package com.kzkv.pso.service
 
-import com.kzkv.pso.data.ParticleParams
+import com.kzkv.pso.data.ObstacleParams
+import com.kzkv.pso.data.Params
 import com.kzkv.pso.data.Vector
 import com.kzkv.pso.entity.Obstacle
 import com.kzkv.pso.entity.Particle
@@ -12,23 +13,24 @@ class PsoService(private val statisticService: StatisticService) {
 	private var route: ArrayList<Vector> = arrayListOf()
 	var obstacles: List<Obstacle> = listOf()
 
-	fun startPSO(params: ParticleParams): List<Vector> {
-        val start = params.endpoints.first()
-		val goal = params.endpoints.last()
-		val particles = List(params.numberOfParticles) { Particle(start, Vector(-1.0, 1.0), start) }
+	fun startPSO(params: Params): List<Vector> {
+		val particleParams = params.particleParams
+        val start = particleParams.endpoints.first()
+		val goal = particleParams.endpoints.last()
+		val particles = List(particleParams.numberOfParticles) { Particle(start, Vector(-1.0, 1.0), start) }
 		var bestGlobalPosition = start.copy()
 		val bestGlobalRoute = arrayListOf(start)
-		var inertia = params.w
+		var inertia = particleParams.w
 
 		val startTime = System.nanoTime()
-		for(i in 0 until params.numberOfIterations) {
+		for(i in 0 until particleParams.numberOfIterations) {
 			if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal)) {
 				bestGlobalRoute.add(goal)
 				route = if (route.isEmpty() || !isRouteValid(route)) bestGlobalRoute else getShortestRoute(route, bestGlobalRoute)
 				break
 			}
 			particles.forEach { particle ->
-				particle.move(bestGlobalPosition, inertia, params)
+				particle.move(bestGlobalPosition, inertia, particleParams)
 				particle.getParticleBestPosition(goal, obstacles)
 
 				if (shouldUpdateBestGlobal(particle, bestGlobalPosition, goal, bestGlobalRoute)) {
@@ -37,10 +39,10 @@ class PsoService(private val statisticService: StatisticService) {
 					bestGlobalRoute.add(bestGlobalPosition)
 				}
 			}
-			inertia *= params.alpha
+			inertia *= particleParams.alpha
 		}
 		val endTime = System.nanoTime()
-		statisticService.addStats(startTime, endTime, route)
+		statisticService.addStats(startTime, endTime, route, getObstacleDensity(params.obstacleParams))
 		return route
 	}
 
@@ -93,5 +95,21 @@ class PsoService(private val statisticService: StatisticService) {
 	fun clearRoute() {
 		route = arrayListOf()
 	}
+
+	private fun getObstacleDensity(obstacleParams: ObstacleParams, samples: Int = 10_000): Double {
+		if (obstacles.isEmpty() || samples <= 0) return 0.0
+
+		var insideCount = 0
+		repeat(samples) {
+			val point = Vector(obstacleParams.endpoints.first(), obstacleParams.endpoints.last())
+
+			if (obstacles.any { obstacle -> Vector.getDistance(obstacle.center, point) <= obstacle.radius }) {
+				insideCount++
+			}
+		}
+
+		return insideCount.toDouble() / samples
+	}
+
 
 }
