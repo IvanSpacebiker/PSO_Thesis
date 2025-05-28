@@ -5,4 +5,5 @@ data class Statistic(
 	val time: Long,
 	val calcTime: Long,
 	val pathLength: Double,
+	val obstacleDensity: Double,
 )
