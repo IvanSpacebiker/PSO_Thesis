@@ -26,4 +26,9 @@ class ObstacleController(
 		return ResponseEntity.ok(obstacleService.test(params))
 	}
 
+	@PostMapping("test-radius")
+	fun runTestRadius(@RequestBody params: Params) : ResponseEntity<List<Statistic>> {
+		return ResponseEntity.ok(obstacleService.testRadius(params))
+	}
+
 }

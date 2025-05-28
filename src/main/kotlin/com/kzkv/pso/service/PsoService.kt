@@ -21,7 +21,7 @@ class PsoService(private val statisticService: StatisticService) {
 		var bestGlobalPosition = start.copy()
 		val bestGlobalRoute = arrayListOf(start)
 		var inertia = particleParams.w
-		var objectRadius = particleParams.radius
+		val objectRadius = particleParams.radius
 
 		val startTime = System.nanoTime()
 		for(i in 0 until particleParams.numberOfIterations) {
@@ -37,6 +37,39 @@ class PsoService(private val statisticService: StatisticService) {
 				if (shouldUpdateBestGlobal(particle, bestGlobalPosition, goal, bestGlobalRoute, objectRadius)) {
 					bestGlobalPosition = particle.bestPosition.copy()
 					optimizeBestRoute(bestGlobalRoute, bestGlobalPosition, objectRadius)
+					bestGlobalRoute.add(bestGlobalPosition)
+				}
+			}
+			inertia *= particleParams.alpha
+		}
+		val endTime = System.nanoTime()
+		statisticService.addStats(startTime, endTime, route, getObstacleDensity(params.obstacleParams))
+		return route
+	}
+
+	fun startPSO(params: Params, radius: Double): List<Vector> {
+		val particleParams = params.particleParams
+		val start = particleParams.endpoints.first()
+		val goal = particleParams.endpoints.last()
+		val particles = List(particleParams.numberOfParticles) { Particle(start, Vector(-1.0, 1.0), start) }
+		var bestGlobalPosition = start.copy()
+		val bestGlobalRoute = arrayListOf(start)
+		var inertia = particleParams.w
+
+		val startTime = System.nanoTime()
+		for(i in 0 until particleParams.numberOfIterations) {
+			if (isNotLineIntersectsObstacle(bestGlobalRoute.last(), goal, radius)) {
+				bestGlobalRoute.add(goal)
+				route = if (route.isEmpty() || !isRouteValid(route, radius)) bestGlobalRoute else getShortestRoute(route, bestGlobalRoute)
+				break
+			}
+			particles.forEach { particle ->
+				particle.move(bestGlobalPosition, inertia, particleParams)
+				particle.getParticleBestPosition(goal, radius, obstacles)
+
+				if (shouldUpdateBestGlobal(particle, bestGlobalPosition, goal, bestGlobalRoute, radius)) {
+					bestGlobalPosition = particle.bestPosition.copy()
+					optimizeBestRoute(bestGlobalRoute, bestGlobalPosition, radius)
 					bestGlobalRoute.add(bestGlobalPosition)
 				}
 			}

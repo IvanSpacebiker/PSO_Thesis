@@ -42,4 +42,15 @@ open class ObstacleService(
 		return statisticService.writeStatistic()
 	}
 
+	fun testRadius(params: Params) : List<Statistic> {
+		statisticService.clearStats()
+		for (i in 1 .. 100) {
+			println("$i")
+			createObstacles(params)
+			psoService.startPSO(params, i / 100.0)
+			psoService.clearRoute()
+		}
+		return statisticService.writeStatistic()
+	}
+
 }
