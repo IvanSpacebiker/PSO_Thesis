@@ -12,7 +12,7 @@ data class Obstacle(
 	var radius: Double,
 	var startPoint: Vector,
 	var endPoint: Vector,
-	var speed: Double
+	var speed: Double,
 ) {
 	constructor() : this(UUID.randomUUID().toString(), Vector(), 0.0, Vector(), Vector(), 0.0)
 	constructor(params: ObstacleParams) : this() {

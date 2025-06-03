@@ -2,8 +2,8 @@ package com.kzkv.pso.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.kzkv.pso.data.Statistic
 import com.kzkv.pso.entity.Obstacle
-import com.kzkv.pso.data.Vector
 import org.springframework.stereotype.Service
 import java.io.File
 import java.nio.file.Paths
@@ -12,7 +12,6 @@ import java.nio.file.Paths
 class JsonService {
 	private val mapper = jacksonObjectMapper()
 	private val resourcesPath = Paths.get("src/main/resources").toString()
-	private val routeJson = File("$resourcesPath/route.json")
 	private val obstaclesJson = File("$resourcesPath/obstacles.json")
 	private val statisticsJson = File("$resourcesPath/statistics.json")
 
@@ -21,12 +20,13 @@ class JsonService {
 	}
 
 	fun writeObstacles(obstacles: List<Obstacle>) : List<Obstacle> {
-		mapper.writerWithDefaultPrettyPrinter().writeValue(obstaclesJson, obstacles)
+		mapper.writerWithDefaultPrettyPrinter().writeValue(obstaclesJson.bufferedWriter(), obstacles)
 		return obstacles
 	}
 
-	fun writeRoute(route: List<Vector>): List<Vector> {
-		mapper.writerWithDefaultPrettyPrinter().writeValue(routeJson.bufferedWriter(), route)
-		return route
+	fun writeStatistic(statistics: List<Statistic>) : List<Statistic> {
+		mapper.writerWithDefaultPrettyPrinter().writeValue(statisticsJson.bufferedWriter(), statistics)
+		return statistics
 	}
+
 }
